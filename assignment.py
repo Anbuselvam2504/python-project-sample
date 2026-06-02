@@ -77,3 +77,17 @@ print(value)
     #- Whether their score is a perfect multiple of 100 (True/False)
     #- Their score formatted as a 6-digit zero-padded number ("004783")
     #- The hex representation of their score
+
+score = 4783          
+level = score // 500
+xp_toward_next_level = score % 500
+percentage_of_max = round((score / 5000) * 100, 1)
+is_perfect_multiple_of_100 = (score % 100 == 0)
+formatted_score = f"{score:06d}"
+hex_representation = hex(score)
+print(f"Level: {level}")
+print(f"XP toward next level: {xp_toward_next_level}")
+print(f"Score as percentage of max: {percentage_of_max}%")
+print(f"Is perfect multiple of 100: {is_perfect_multiple_of_100}")
+print(f"Formatted score: {formatted_score}")
+print(f"Hex representation: {hex_representation}")
