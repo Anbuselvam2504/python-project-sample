@@ -65,3 +65,15 @@ def safe_to_int(val):
 
 value = safe_to_int("0xFF")
 print(value)
+
+
+
+#Q6. SCORE BREAKDOWN
+    #A player's TOTAL score is 4783. Using only arithmetic operators
+   # (no if/while/functions), compute and print:
+    #- Their LEVEL (every 500 points = 1 level)
+    #- Their XP toward next level
+    #- Their score as a percentage of 5000 (max score), rounded to 1dp
+    #- Whether their score is a perfect multiple of 100 (True/False)
+    #- Their score formatted as a 6-digit zero-padded number ("004783")
+    #- The hex representation of their score
