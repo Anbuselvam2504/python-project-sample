@@ -1,0 +1,16 @@
+{
+    "Anbu": {
+        "is_default": true,
+        "voice_id": "anbu_voice_sample",
+        "passcode": null,
+        "created_at": "2026-06-18T17:30:59.656541",
+        "access_level": "default"
+    },
+    "Sarah": {
+        "is_default": false,
+        "voice_id": "sarah_voice_sample",
+        "passcode": "b5692500175fad6bb2b306aa20ff58423c79b130ef310fb3caa924e0f28bc61d",
+        "created_at": "2026-06-18T17:30:59.685852",
+        "access_level": "custom"
+    }
+}

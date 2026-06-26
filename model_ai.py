@@ -5,6 +5,7 @@ import os
 import sys
 import json
 from datetime import datetime
+from auth_system import AuthenticationSystem
 
 class VoiceControlAI:
     def __init__(self):
@@ -16,6 +17,10 @@ class VoiceControlAI:
         self.wake_word = 'melody'
         self.is_active = False
         
+        # Initialize authentication system
+        self.auth = AuthenticationSystem(default_user='Anbu')
+        self.current_user = None
+        
         self.command_map = {
             'open notepad': lambda: subprocess.Popen('notepad.exe'),
             'open calculator': lambda: subprocess.Popen('calc.exe'),
@@ -23,7 +28,7 @@ class VoiceControlAI:
             'open command prompt': lambda: subprocess.Popen('cmd.exe'),
             'open chrome': lambda: subprocess.Popen('C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe'),
             'close application': lambda: os.system('taskkill /F /IM notepad.exe'),
-            'shutdown': lambda: os.system('shutdown /s /t 30'),
+            # 'shutdown': lambda: os.system('shutdown /s /t 30'),
             'restart': lambda: os.system('shutdown /r /t 30'),
             'lock screen': lambda: os.system('rundll32.exe user32.dll,LockWorkStation'),
             'mute': lambda: self._mute_volume(),
@@ -149,7 +154,29 @@ class VoiceControlAI:
         log_file = 'voice_commands.log'
         timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         with open(log_file, 'a') as f:
-            f.write(f"[{timestamp}] Command: {text} | Success: {result}\n")
+            f.write(f"[{timestamp}] User: {self.current_user} | Command: {text} | Success: {result}\n")
+    
+    def authenticate_user(self, name: str = 'Anbu', voice_param: str = None, passcode: str = None):
+        """Authenticate user based on access level"""
+        if name.lower() == 'anbu':
+            success, msg = self.auth.authenticate_default_user(voice_param)
+        else:
+            success, msg = self.auth.authenticate_custom_user(name, voice_param, passcode)
+        
+        if success:
+            self.current_user = name
+            self.speak(msg)
+        else:
+            self.speak(f"Authentication failed: {msg}")
+        
+        return success
+    
+    def require_authentication(self):
+        """Enforce authentication before executing sensitive commands"""
+        if not self.current_user or not self.auth.is_authenticated:
+            self.speak("Please authenticate first. Say your name.")
+            return False
+        return True
     
     def listen_for_wakeword(self):
         """Continuously listen for wake word"""
@@ -210,10 +237,15 @@ class VoiceControlAI:
     def start(self):
         """Start the voice control system"""
         try:
+            # Authenticate default user first
+            self.speak(f"Welcome to your personal assistant. Authenticating as {self.auth.default_user}...")
+            self.authenticate_user()
+            
             while True:
                 self.listen_for_wakeword()
         except KeyboardInterrupt:
             self.speak("Voice control system turned off.")
+            self.auth.logout()
             sys.exit(0)
 
 
