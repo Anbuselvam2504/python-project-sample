@@ -2,8 +2,15 @@
 Test voice authentication with ML fingerprinting
 """
 
-from auth_system import AuthenticationSystem
-from voice_fingerprint import VoiceFingerprint
+import sys
+from pathlib import Path
+
+ROOT_DIR = Path(__file__).resolve().parent
+if str(ROOT_DIR) not in sys.path:
+    sys.path.insert(0, str(ROOT_DIR))
+
+from voice_assistant.auth_system import AuthenticationSystem
+from voice_assistant.voice_fingerprint import VoiceFingerprint
 import numpy as np
 
 def test_voice_system():

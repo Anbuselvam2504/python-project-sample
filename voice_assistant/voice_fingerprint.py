@@ -3,6 +3,13 @@ Voice Fingerprinting Module - ML-based voice authentication
 Pure Python implementation - no external ML libraries required
 """
 
+import sys
+from pathlib import Path
+
+ROOT_DIR = Path(__file__).resolve().parent
+if str(ROOT_DIR) not in sys.path:
+    sys.path.insert(0, str(ROOT_DIR))
+
 import pickle
 import os
 import math
@@ -28,7 +35,12 @@ class VoiceFingerprint:
     """Extract and compare voice fingerprints using spectral analysis"""
     
     def __init__(self, fingerprints_db: str = 'voice_fingerprints.pkl'):
-        self.fingerprints_db = fingerprints_db
+        if Path(fingerprints_db).is_absolute():
+            fingerprints_db = Path(fingerprints_db)
+        else:
+            fingerprints_db = ROOT_DIR / fingerprints_db
+
+        self.fingerprints_db = str(Path(fingerprints_db).resolve())
         self.fingerprints = {}
         self.similarity_threshold = 0.75  # 0-1 scale, higher = stricter
         

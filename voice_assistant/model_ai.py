@@ -1,5 +1,23 @@
-import speech_recognition as sr
-import pyttsx3
+import sys
+from pathlib import Path
+
+ROOT_DIR = Path(__file__).resolve().parent
+if str(ROOT_DIR) not in sys.path:
+    sys.path.insert(0, str(ROOT_DIR))
+
+try:
+    import speech_recognition as sr
+    SR_AVAILABLE = True
+except Exception:
+    sr = None
+    SR_AVAILABLE = False
+
+try:
+    import pyttsx3
+    TTS_AVAILABLE = True
+except Exception:
+    pyttsx3 = None
+    TTS_AVAILABLE = False
 import subprocess
 import os
 import sys
@@ -9,10 +27,30 @@ from auth_system import AuthenticationSystem
 
 class VoiceControlAI:
     def __init__(self):
-        self.recognizer = sr.Recognizer()
-        self.engine = pyttsx3.init()
-        self.engine.setProperty('rate', 150)
-        self.engine.setProperty('volume', 0.9)
+        # Initialize recognizer (if available)
+        if SR_AVAILABLE and sr is not None:
+            self.recognizer = sr.Recognizer()
+        else:
+            self.recognizer = None
+
+        # Initialize TTS engine (use a no-op fallback when unavailable)
+        if TTS_AVAILABLE and pyttsx3 is not None:
+            self.engine = pyttsx3.init()
+            try:
+                self.engine.setProperty('rate', 150)
+                self.engine.setProperty('volume', 0.9)
+            except Exception:
+                pass
+        else:
+            class _DummyEngine:
+                def setProperty(self, *_):
+                    return None
+                def say(self, text):
+                    print(f"[TTS disabled] {text}")
+                def runAndWait(self):
+                    return None
+
+            self.engine = _DummyEngine()
         
         self.wake_word = 'melody'
         self.is_active = False
@@ -56,23 +94,23 @@ class VoiceControlAI:
     
     def listen(self):
         """Capture voice input and convert to text"""
+        if not SR_AVAILABLE or self.recognizer is None:
+            self.speak("Speech recognition is unavailable. Install 'speech_recognition' to enable voice features.")
+            return None
+
         try:
             with sr.Microphone() as source:
                 print("[Listening...] Speak now...")
                 self.recognizer.adjust_for_ambient_noise(source, duration=1)
                 audio = self.recognizer.listen(source, timeout=10)
-            
+
             text = self.recognizer.recognize_google(audio)
             print(f"[You]: {text}")
             return text.lower()
-        except sr.UnknownValueError:
-            self.speak("Sorry, I didn't understand that.")
-            return None
-        except sr.RequestError as e:
-            self.speak(f"Error: {e}")
-            return None
         except Exception as e:
-            self.speak(f"Listening error: {e}")
+            # speech_recognition-specific exceptions may not be available in all environments
+            msg = getattr(e, 'message', str(e))
+            self.speak(f"Listening error: {msg}")
             return None
     
     def _mute_volume(self):
@@ -180,51 +218,51 @@ class VoiceControlAI:
     
     def listen_for_wakeword(self):
         """Continuously listen for wake word"""
+        if not SR_AVAILABLE or self.recognizer is None:
+            return
+
         try:
             with sr.Microphone() as source:
                 self.recognizer.adjust_for_ambient_noise(source, duration=0.5)
                 audio = self.recognizer.listen(source, timeout=5)
-            
+
             text = self.recognizer.recognize_google(audio).lower()
             print(f"[Heard]: {text}")
-            
+
             if self.wake_word in text:
                 self.is_active = True
                 greeting = self.get_greeting()
                 self.speak(greeting)
                 self.command_loop()
-            
-        except sr.UnknownValueError:
-            pass
-        except sr.RequestError:
-            pass
+
         except Exception:
+            # Ignore listen errors silently
             pass
     
     def command_loop(self):
         """Main command listening loop after wake word detected"""
         while self.is_active:
             try:
+                if not SR_AVAILABLE or self.recognizer is None:
+                    self.speak("Speech recognition is unavailable. Cannot listen for commands.")
+                    break
+
                 with sr.Microphone() as source:
                     print("[Listening for command...]")
                     self.recognizer.adjust_for_ambient_noise(source, duration=0.5)
                     audio = self.recognizer.listen(source, timeout=10)
-                
+
                 command = self.recognizer.recognize_google(audio).lower()
                 print(f"[Command]: {command}")
                 self.speak(f"You said: {command}")
-                
+
                 result = self.process_command(command)
                 self.save_log(command, result)
-                
+
                 if not result:
                     self.is_active = False
                     break
-                
-            except sr.UnknownValueError:
-                self.speak("Sorry, I did not understand. Please repeat.")
-            except sr.RequestError as e:
-                self.speak(f"Error with audio service: {e}")
+
             except KeyboardInterrupt:
                 self.is_active = False
                 self.speak("System shut down.")

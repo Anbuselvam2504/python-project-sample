@@ -1,3 +1,10 @@
+import sys
+from pathlib import Path
+
+ROOT_DIR = Path(__file__).resolve().parent
+if str(ROOT_DIR) not in sys.path:
+    sys.path.insert(0, str(ROOT_DIR))
+
 import json
 import os
 import hashlib
@@ -11,7 +18,12 @@ class AuthenticationSystem:
     """Multi-level authentication system for personal assistant"""
     
     def __init__(self, users_db_path: str = 'users.json', default_user: str = 'Anbu'):
-        self.users_db_path = users_db_path
+        if users_db_path is None:
+            users_db_path = ROOT_DIR / 'users.json'
+        else:
+            users_db_path = Path(users_db_path) if Path(users_db_path).is_absolute() else ROOT_DIR / users_db_path
+
+        self.users_db_path = str(Path(users_db_path).resolve())
         self.default_user = default_user
         self.current_user = None
         self.is_authenticated = False
